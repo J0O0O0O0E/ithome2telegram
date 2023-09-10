@@ -4,6 +4,7 @@ import schedule
 import time
 import logging
 from bs4 import BeautifulSoup
+from http.client import IncompleteRead
 
 logging.basicConfig(level=logging.INFO)
 
@@ -33,24 +34,27 @@ def send_to_telegram(title, summary, link, image_url):
         logging.error(f'Failed to send message: {title}. Error: {e}')
 
 def parse_feed():
-    NewsFeed = feedparser.parse("https://www.ithome.com/rss/")
-    for entry in NewsFeed.entries:
-        # Skip the news that has been sent
-        if entry.link in sent_news:
-            continue
-        title = entry.title
-        soup = BeautifulSoup(entry.description, 'html.parser')
-        paragraphs = soup.find_all('p')
-        summary = '\n'.join(p.get_text() for p in paragraphs[:2])
-        link = entry.link
-        # Get the first image in the news
-        image_url = soup.find('img')['src'] if soup.find('img') else None
-        send_to_telegram(title, summary, link, image_url)
-        # Mark this news as sent
-        sent_news.add(entry.link)
+    try:
+        NewsFeed = feedparser.parse("https://www.ithome.com/rss/")
+        for entry in NewsFeed.entries:
+            # Skip the news that has been sent
+            if entry.link in sent_news:
+                continue
+            title = entry.title
+            soup = BeautifulSoup(entry.description, 'html.parser')
+            paragraphs = soup.find_all('p')
+            summary = '\n'.join(p.get_text() for p in paragraphs[:2])
+            link = entry.link
+            # Get the first image in the news
+            image_url = soup.find('img')['src'] if soup.find('img') else None
+            send_to_telegram(title, summary, link, image_url)
+            # Mark this news as sent
+            sent_news.add(entry.link)
+    except IncompleteRead as e:
+        logging.error(f'Failed to read RSS feed. Error: {e}')
 
 if __name__ == "__main__":
-    schedule.every(60).seconds.do(parse_feed)
+    schedule.every(300).seconds.do(parse_feed)
     while True:
         schedule.run_pending()
         time.sleep(1)
