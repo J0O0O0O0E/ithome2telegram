@@ -54,7 +54,7 @@ def parse_feed():
         logging.error(f'Failed to read RSS feed. Error: {e}')
 
 if __name__ == "__main__":
-    schedule.every(300).seconds.do(parse_feed)
+    schedule.every(180).seconds.do(parse_feed)
     while True:
         schedule.run_pending()
         time.sleep(1)
