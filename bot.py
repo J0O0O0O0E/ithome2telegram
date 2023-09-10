@@ -4,7 +4,6 @@ import schedule
 import time
 import logging
 from bs4 import BeautifulSoup
-from http.client import IncompleteRead
 
 logging.basicConfig(level=logging.INFO)
 
@@ -50,11 +49,11 @@ def parse_feed():
             send_to_telegram(title, summary, link, image_url)
             # Mark this news as sent
             sent_news.add(entry.link)
-    except IncompleteRead as e:
+    except Exception as e:
         logging.error(f'Failed to read RSS feed. Error: {e}')
 
 if __name__ == "__main__":
-    schedule.every(180).seconds.do(parse_feed)
+    schedule.every(300).seconds.do(parse_feed)
     while True:
         schedule.run_pending()
         time.sleep(1)
